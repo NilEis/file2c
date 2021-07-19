@@ -4,32 +4,34 @@
 #include <unistd.h>
 
 #define log(vq, ...)                             \
-    do                                                   \
-    {                                                    \
-        switch (vq)                                      \
-        {                                                \
-        case 'v':                                        \
-            if (verbose)                                 \
-            {                                            \
-                printf("Verbose: "  __VA_ARGS__); \
-            }                                            \
-            break;                                       \
-        case 'q':                                        \
-            if (!quiet)                                  \
-            {                                            \
+    do                                           \
+    {                                            \
+        switch (vq)                              \
+        {                                        \
+        case 'v':                                \
+            if (verbose)                         \
+            {                                    \
+                printf("Verbose: " __VA_ARGS__); \
+            }                                    \
+            break;                               \
+        case 'q':                                \
+            if (!quiet)                          \
+            {                                    \
                 printf(__VA_ARGS__);             \
-            }                                            \
-            break;                                       \
-        }                                                \
+            }                                    \
+            break;                               \
+        }                                        \
     } while (0)
 
 int main(int argc, char **argv)
 {
     char *file = NULL;
+    char *array_name = NULL;
     char *output = NULL;
     char verbose = 0;
     char quiet = 0;
     int c = 0;
+    int len = 0;
     FILE *file_p = NULL;
     FILE *output_p = NULL;
     while ((c = getopt(argc, argv, "-o:vq")) != -1)
@@ -57,9 +59,9 @@ int main(int argc, char **argv)
         log('q', "no input files");
         abort();
     }
+    len = strlen(file);
     if (output == NULL)
     {
-        int len = strlen(file);
         int i = 0;
         while ((file[len - i] != '.') && ((len - i) != 0))
         {
@@ -82,7 +84,18 @@ int main(int argc, char **argv)
             output[len - (i - 2)] = '\0';
         }
     }
-    log('v', "file: %s, output: %s, verbose: %d, quiet: %d\n", file, output, verbose, quiet);
+    array_name = (char *)malloc((len + 1) * sizeof(char));
+    strcpy(array_name, file);
+    char *array_name_p = array_name;
+    while (*array_name_p != '\0')
+    {
+        if (*array_name_p == '.' || *array_name_p == '/' || *array_name_p == '\\' || *array_name_p == ':')
+        {
+            *array_name_p = '_';
+        }
+        array_name_p++;
+    }
+    log('v', "file: %s, array_name: %s, output: %s, verbose: %d, quiet: %d\n", file, array_name, output, verbose, quiet);
     file_p = fopen(file, "r");
     if (file_p == NULL)
     {
@@ -91,6 +104,19 @@ int main(int argc, char **argv)
         abort();
     }
     output_p = fopen(output, "w");
+    fprintf(output_p, "#ifndef %s\n#define %s\n\nconst char %s = {", array_name, array_name, array_name);
+    while (1)
+    {
+        char ch[1] = "";
+        fread(ch, 1, 1, file_p);
+        fprintf(output_p, "%u", ch[0]);
+        if (feof(file_p))
+        {
+            fprintf(output_p, "};\n\n#endif");
+            break;
+        }
+        fprintf(output_p, ", ");
+    }
     fclose(output_p);
     fclose(file_p);
     return 0;
