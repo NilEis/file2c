@@ -106,7 +106,7 @@ int main(int argc, char **argv)
         abort();
     }
     output_p = fopen(output, "w");
-    fprintf(output_p, "#ifndef %s\n#define %s\n\nconst char %s = {", array_name, array_name, array_name);
+    fprintf(output_p, "#ifndef %s\n#define %s\n\n#include <stdint.h>\n\nconst uint8_t %s = {", array_name, array_name, array_name);
     while (1)
     {
         uint8_t ch[1] = "";
