@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <inttypes.h>
 #include <unistd.h>
 
 #define log(vq, ...)                             \
@@ -107,9 +109,9 @@ int main(int argc, char **argv)
     fprintf(output_p, "#ifndef %s\n#define %s\n\nconst char %s = {", array_name, array_name, array_name);
     while (1)
     {
-        char ch[1] = "";
+        uint8_t ch[1] = "";
         fread(ch, 1, 1, file_p);
-        fprintf(output_p, "%u", ch[0]);
+        fprintf(output_p, "%"PRIu8, ch[0]);
         if (feof(file_p))
         {
             fprintf(output_p, "};\n\n#endif");
