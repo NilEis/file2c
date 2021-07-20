@@ -36,7 +36,7 @@ int main(int argc, char **argv)
     int len = 0;
     FILE *file_p = NULL;
     FILE *output_p = NULL;
-    while ((c = getopt(argc, argv, "-o:vq")) != -1)
+    while ((c = getopt(argc, argv, "-o:vqh")) != -1)
     {
         switch (c)
         {
@@ -54,12 +54,16 @@ int main(int argc, char **argv)
             verbose = 0;
             quiet = 1;
             break;
+        case 'h':
+            printf("file2c [-h] [-v] [-q] [-o <file>] <input>\n-h: Display this information\n-v: Provide additional details\n-q: Deactivates all warnings/errors\n-o <file>: Place the output into <file>");
+            return 0;
+            break;
         }
     }
     if (file == NULL)
     {
         log('q', "no input files");
-        abort();
+        return -1;
     }
     len = strlen(file);
     if (output == NULL)
@@ -103,7 +107,7 @@ int main(int argc, char **argv)
     {
         log('q', "No such file or directory");
         free(output);
-        abort();
+        return -1;
     }
     output_p = fopen(output, "w");
     fprintf(output_p, "#ifndef %s_H\n#define %s_H\n\n#include <stdint.h>\n\nconst uint8_t %s[] = {", array_name, array_name, array_name);
