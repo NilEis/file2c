@@ -106,15 +106,17 @@ int main(int argc, char **argv)
         abort();
     }
     output_p = fopen(output, "w");
-    fprintf(output_p, "#ifndef %s\n#define %s\n\n#include <stdint.h>\n\nconst uint8_t %s = {", array_name, array_name, array_name);
+    fprintf(output_p, "#ifndef %s_H\n#define %s_H\n\n#include <stdint.h>\n\nconst uint8_t %s[] = {", array_name, array_name, array_name);
+    c = 0;
     while (1)
     {
         uint8_t ch[1] = "";
         fread(ch, 1, 1, file_p);
         fprintf(output_p, "%"PRIu8, ch[0]);
+        c++;
         if (feof(file_p))
         {
-            fprintf(output_p, "};\n\n#endif");
+            fprintf(output_p, "};\nconst int %s_size = %d;\n\n#endif", array_name, c);
             break;
         }
         fprintf(output_p, ", ");
