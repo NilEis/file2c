@@ -5,6 +5,14 @@
 #include <inttypes.h>
 #include <unistd.h>
 
+#define file_size(x, file)        \
+    do                            \
+    {                             \
+        fseek(file, 0, SEEK_END); \
+        x = ftell(file);          \
+        rewind(file);             \
+    } while (0);
+
 #define log(vq, ...)                             \
     do                                           \
     {                                            \
@@ -102,7 +110,7 @@ int main(int argc, char **argv)
         array_name_p++;
     }
     log('v', "file: %s, array_name: %s, output: %s, verbose: %d, quiet: %d\n", file, array_name, output, verbose, quiet);
-    file_p = fopen(file, "r");
+    file_p = fopen(file, "rb");
     if (file_p == NULL)
     {
         log('q', "No such file or directory");
@@ -111,14 +119,16 @@ int main(int argc, char **argv)
     }
     output_p = fopen(output, "w");
     fprintf(output_p, "#ifndef %s_H\n#define %s_H\n\n#include <stdint.h>\n\nconst uint8_t %s[] = {", array_name, array_name, array_name);
+    long f_size = 0;
+    file_size(f_size, file_p);
     while (1)
     {
         uint8_t ch[1] = "";
         fread(ch, 1, 1, file_p);
         fprintf(output_p, "%" PRIu8, ch[0]);
-        if (feof(file_p))
+        f_size--;
+        if (!f_size)
         {
-            fseek(output_p,-3,SEEK_CUR);
             fprintf(output_p, "};\nconst int %s_size = sizeof(%s);\n\n#endif", array_name, array_name);
             break;
         }
