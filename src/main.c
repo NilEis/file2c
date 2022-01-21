@@ -1,3 +1,4 @@
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -88,7 +89,7 @@ int main(int argc, char **argv)
             output_c = (char *)malloc((len + 3) * sizeof(char));
             strcpy(output_c, file);
             output_c[len] = '.';
-            output_c[len + 1] = 'h';
+            output_c[len + 1] = 'c';
             output_c[len + 2] = '\0';
         }
         else
@@ -119,15 +120,16 @@ int main(int argc, char **argv)
         free(output_c);
         return -1;
     }
-    
-    output_h = calloc(strlen(output_c) + 3, sizeof(char));
-    sprintf(output_h, "%s.h", output_c);
-    output_h_p = fopen(output_h, "w");
 
+    output_h = calloc(strlen(output_c) + 1, sizeof(char));
+    memcpy(output_h, output_c, strlen(output_c));
+    output_h[strlen(output_c) - 1] = 'h';
+    output_h_p = fopen(output_h, "w");
     output_c_p = fopen(output_c, "w");
     fprintf(output_c_p, "#include \"%s\"\n\nconst uint8_t %s[] = {", output_h, array_name);
     long f_size = 0;
     file_size(f_size, file_p);
+    f_size = (f_size < 1) * 1 + (1 <= f_size) * f_size;
     while (1)
     {
         uint8_t ch[1] = "";
@@ -141,8 +143,52 @@ int main(int argc, char **argv)
         }
         fprintf(output_c_p, ", ");
     }
-    fprintf(output_h_p, "#ifndef %s_H\n#define %s_H\n\n#include <stdint.h>\n#include <stddef.h>\n\nextern const uint8_t %s[];\n\nextern const size_t %s_size;\n\n#endif", array_name,array_name, array_name, array_name);
-    
+    fprintf(output_h_p,
+            "#ifndef %s_H\n"
+            "#define %s_H\n"
+            "\n"
+            "#include <stdint.h>\n"
+            "#include <stddef.h>\n"
+            "\n"
+            "extern const uint8_t %s[];\n"
+            "\n"
+            "extern const size_t %s_size;\n"
+            "\n"
+            "#endif",
+            array_name, array_name, array_name, array_name);
+
+    FILE *lib_c = fopen("file2c.c", "r+");
+    FILE *lib_h = fopen("file2c.h", "r+");
+    if (lib_c == NULL)
+    {
+        lib_c = fopen("file2c.c", "w");
+        fprintf(lib_c,
+                "#include \"file2c.h\"\n"
+                "#include <stdlib.h>\n"
+                "#include <stdio.h>\n"
+                "#include <stdint.h>\n"
+                "\n"
+                "int create_file(const char* name, uint8_t * f, size_t size)\n"
+                "{\n"
+                "\tFILE* out = fopen(name, \"wb\");\n"
+                "\tfwrite(f, sizeof(uint8_t), size, out);\n"
+                "\tfclose(out);\n"
+                "}\n");
+        fclose(lib_c);
+    }
+    if (lib_h == NULL)
+    {
+        lib_h = fopen("file2c.h", "w");
+        fprintf(lib_h,
+                "#ifndef FILE2C_H\n"
+                "#define FILE2C_H\n"
+                "#include<stdint.h>\n"
+                "\n"
+                "extern int create_file(const char* name, uint8_t * f, size_t size)\n"
+                "\n"
+                "#endif // FILE2C_H\n");
+        fclose(lib_h);
+    }
     free(output_c);
     free(output_h);
     fclose(output_c_p);
